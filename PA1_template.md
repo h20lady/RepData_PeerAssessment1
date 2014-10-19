@@ -138,7 +138,7 @@ act2[104,]
 ## 104      835 206.1698
 ```
 
-The 103rd row's 5-minute interval which is the 835th minute contains the maximum average number of steps
+The **835th** interval contains the maximum average number of steps
 
 ****
 ### Imputing missing values
@@ -166,9 +166,11 @@ There are 2304 NAs in the dataset
 ****
 ###### This dataset has missing values filled.
 ****
+The strategy is to find NA values for each interval and replace with mean of that interval.
+
 
 ```r
-#find NA values for each day and replace with mean of that day
+#find NA values for each interval and replace with mean of that interval
 
 act_xna_filled <- 
      
