@@ -6,7 +6,7 @@ output: html_document
 
 ---
 
-##Assignment
+## Assignment
 ****
 
 ```{r, echo=TRUE}
@@ -29,9 +29,9 @@ act1 <-
 ```
 
 ****
-###What is mean total number of steps taken per day?
-#####Histogram of the total number of steps taken each day. 
-######Missing values have been ignored (i.e. removed) in this dataset.
+### What is mean total number of steps taken per day?
+##### Histogram of the total number of steps taken each day. 
+###### Missing values have been ignored (i.e. removed) in this dataset.
 ****
 ```{r, echo=TRUE}
 
@@ -53,8 +53,8 @@ print(hist)
 ```
 
 ****
-#####Mean and Median of Total number of steps taken per day. 
-######Missing values have been ignored in this dataset.
+##### Mean and Median of Total number of steps taken per day. 
+###### Missing values have been ignored in this dataset.
 ****
 ```{r,echo=TRUE}
 mean(act1$totsteps)
@@ -63,10 +63,12 @@ median(act1$totsteps)
 Mean of Total Steps Per Day = 9354 and Median of Total Steps Per Day = 10395
 
 ****
-###What is the average daily activity pattern?
-#####Time-Series Plot
+### What is the average daily activity pattern?
+##### Time-Series Plot
 ****
 ```{r,echo=TRUE}
+
+#find the mean of each interval while ignoring NAs
 
 act2 <- 
      act %>%
@@ -95,9 +97,9 @@ act2[104,]
 The 103rd row's 5-minute interval which is the 835th minute contains the maximum average number of steps
 
 ****
-###Imputing missing values
-#####Histogram of the total number of steps taken each day. 
-######This dataset has missing values filled.
+### Imputing missing values
+##### Histogram of the total number of steps taken each day. 
+###### This dataset has missing values filled.
 ****
 ```{r, echo=TRUE}
 summary(act)
@@ -106,30 +108,44 @@ summary(act)
 There are 2304 NAs in the dataset
 
 ****
-######This dataset has missing values filled.
+###### This dataset has missing values filled.
 ****
 ```{r,echo=TRUE}
 #find NA values for each day and replace with mean of that day
 
+act_xna_filled <- 
+     
+     act %>% 
+     group_by(interval) %>% 
+     mutate(meanstepsNew = ifelse(is.na(steps), mean(steps,na.rm=TRUE), steps))
 
-
+act_xna_filled2 <-
+     
+     act_xna_filled %>%
+     group_by(dateconverted) %>%
+     summarise(totstepswithNA = sum(meanstepsNew))
+     
 ```
-Mean = b and Median = m
+
+****
+```{r,echo=TRUE}
+mean(act_xna_filled2$totstepswithNA)
+median(act_xna_filled2$totstepswithNA)
+```
+
+The mean and median from the previous part of the assignment were 9354 and 10395 respectively.
+Based on the mean and medians above, the 2304 rows of NAs do impact the total average daily number of steps.
+
 ****
 ```{r,echo=TRUE}
 
-act2 <- 
-     act %>%
-     group_by(dateconverted) %>%
-     summarise(totsteps = sum(steps, na.rm=TRUE))
+r <- ggplot(act_xna_filled2, aes(x=totstepswithNA)) + geom_histogram(binwidth=1000)
 
-p <- ggplot(act2, aes(x=totsteps)) + geom_histogram(binwidth=1000)
-
-hist<- p + 
-     labs(title = "Histogram of Total Number of Steps Per Day\n Missing Values Filled") + 
+hist<- r + 
+     labs(title = "Histogram of Total Number of Steps Per Day\n Missing NA Values Filled") + 
      xlab("Total Number of Steps Per Day") + ylab("Frequency of Total Number of Steps Per Day") + 
      xlim(0,25000) +
-     ylim(0, 20)
+     ylim(0,20)
 
 print(hist)
 
@@ -138,14 +154,41 @@ print(hist)
 
 ```
 
-###Are there differences in activity patterns between weekdays and weekends?
+### Are there differences in activity patterns between weekdays and weekends?
 
 ```{r,echo=TRUE}
-#find NA values for each day and replace with mean of that day
 
+#create a new factor variable for weekday
+mtwtf <- function(day) {
+  wday <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
+  is.element(weekdays(as.Date(day)), wday)
+}
+
+# create a new column "daytype" and store in a new data frame called "act_mtwtf"
+act_mtwtf <-act_xna_filled %>% 
+     mutate(daytype = factor(mtwtf(date), levels=c(FALSE, TRUE), labels=c("Weekend", "Weekday")))
+
+meansteps_withlabels <- 
+     act_mtwtf %>% 
+     group_by(interval, daytype) %>% 
+     summarize(steps=mean(meanstepsNew))
 
 
 ```
 
 
+```{r,echo=TRUE}
 
+#Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval 
+# (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis)
+
+
+s <- qplot(interval, steps, data=meansteps_withlabels, geom=c("line"), facets= daytype ~ ., main="Time Series Plot with Missing Values Filled \n (Weekday/Weekend)", xlab="Interval", ylab="Average Steps Taken")
+
+print(s)
+
+#Saves as image file to drive:
+#ggsave("Fig4_act.png", plot=hist, scale = 1, width = 8, height = 5, units = c("in"), dpi = 80)
+```
+
+Yes. There are differences between weekend and weekday activities.
